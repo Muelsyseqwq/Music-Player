@@ -2367,7 +2367,7 @@ function startImmersionSlideshow() {
     if (state.view === "playing") {
       applyImmersionBackground(immersionImages[immersionIndex]);
     }
-  }, 8000); // 8 seconds per image
+  }, 15000); // 15 seconds per image
 }
 
 function stopImmersionSlideshow() {
