@@ -1,0 +1,668 @@
+<!doctype html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>本地音乐播放器</title>
+        <link rel="stylesheet" href="/styles.css" />
+    </head>
+    <body>
+        <div class="app">
+            <!-- ═══ IMMERSION BACKGROUND ═══ -->
+            <div class="immersion-bg" id="immersionBg"></div>
+
+            <!-- ═══ WINDOW CONTROLS ═══ -->
+            <div class="window-controls">
+                <div class="window-controls-drag"></div>
+                <div class="window-controls-btns">
+                    <button class="win-btn win-btn--immersive" id="winImmersiveBtn" title="沉浸模式">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                    </button>
+                    <button class="win-btn win-btn--settings" id="winSettingsBtn" title="设置">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    </button>
+                    <div class="win-btn-separator"></div>
+                    <button class="win-btn win-btn--min" id="winMinBtn" title="最小化">
+                        <svg width="12" height="12" viewBox="0 0 12 12"><rect x="1" y="6" width="10" height="1" fill="currentColor"/></svg>
+                    </button>
+                    <button class="win-btn win-btn--max" id="winMaxBtn" title="最大化">
+                        <svg width="12" height="12" viewBox="0 0 12 12"><rect x="1.5" y="1.5" width="9" height="9" fill="none" stroke="currentColor" stroke-width="1"/></svg>
+                    </button>
+                    <button class="win-btn win-btn--close" id="winCloseBtn" title="关闭">
+                        <svg width="12" height="12" viewBox="0 0 12 12"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ═══ SIDEBAR ═══ -->
+            <aside class="sidebar" id="sidebar">
+                <div class="sidebar-brand">
+                    <div class="brand-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></div>
+                    <div class="brand-text">
+                        <strong>Muelsyse</strong>
+                    </div>
+                </div>
+
+                <nav class="sidebar-nav">
+                    <div class="nav-section">
+                        <div class="nav-section-title">音乐</div>
+                        <button class="nav-item is-active" data-view="playing">
+                            <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg></span>
+                            <span class="nav-item-label">正在播放</span>
+                        </button>
+                        <button class="nav-item" data-view="library">
+                            <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></span>
+                            <span class="nav-item-label">音乐列表</span>
+                        </button>
+                    </div>
+
+                    <div class="nav-section">
+                        <div class="nav-section-title nav-section-title--flex">
+                            <span>我的歌单</span>
+                            <button
+                                class="nav-add-btn"
+                                id="createPlaylistBtn"
+                                title="新建歌单"
+                            >
+                                ＋
+                            </button>
+                        </div>
+                        <div id="playlistNav" class="playlist-nav">
+                            <!-- dynamic playlist nav items -->
+                        </div>
+                    </div>
+
+                    <div class="nav-section">
+                        <div class="nav-section-title">工具</div>
+                        <button class="nav-item" data-view="stats">
+                            <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>
+                            <span class="nav-item-label">轨迹</span>
+                        </button>
+                    </div>
+                </nav>
+
+                <div class="sidebar-footer">
+                    <span>本地音乐播放器 v2.0</span>
+                </div>
+            </aside>
+
+            <!-- ═══ MAIN CONTENT ═══ -->
+            <main class="content-area" id="contentArea">
+                <!-- ── VIEW: Playing ── -->
+                <div class="view" id="view-playing">
+                    <div class="playing-bg" id="playingBg"></div>
+                    <div class="playing-layout">
+                        <div class="playing-left">
+                            <div class="disc-wrapper">
+                                <div class="disc" id="mainDisc">
+                                    <div class="disc-ring disc-ring--1"></div>
+                                    <div class="disc-ring disc-ring--2"></div>
+                                    <div class="disc-center"></div>
+                                </div>
+                            </div>
+                            <div class="playing-track-meta">
+                                <h2 class="playing-title" id="playingTitle">
+                                    未在播放
+                                </h2>
+                                <p
+                                    class="playing-subtitle"
+                                    id="playingSubtitle"
+                                >
+                                    选择一首歌曲开始你的音乐之旅
+                                </p>
+                                <div class="playing-actions">
+                                    <button
+                                        class="playing-action-btn"
+                                        id="playingFavoriteBtn"
+                                        title="加入歌单"
+                                    >
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="playing-right">
+                            <div class="lyrics-header">
+                                <span class="lyrics-status" id="lyricsStatus"
+                                    >歌词</span
+                                >
+                            </div>
+                            <div class="lyrics-scroll" id="lyricsScroll">
+                                <div
+                                    class="lyrics-placeholder"
+                                    id="lyricsPlaceholder"
+                                >
+                                    <p>暂无歌词</p>
+                                    <span
+                                        >播放歌曲后将自动从网易云匹配歌词</span
+                                    >
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── VIEW: Library ── -->
+                <div class="view hidden" id="view-library">
+                    <div class="view-bg" id="libraryBg"></div>
+                    
+                    <!-- Listening Stats Section -->
+                    <div class="library-stats-section">
+                        <div class="stats-today-circle">
+                            <svg class="circle-progress" viewBox="0 0 100 100">
+                                <defs>
+                                    <linearGradient id="circleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" style="stop-color:#ff6b9d;stop-opacity:1" />
+                                        <stop offset="100%" style="stop-color:#20c997;stop-opacity:1" />
+                                    </linearGradient>
+                                </defs>
+                                <circle class="circle-bg" cx="50" cy="50" r="45"/>
+                                <circle class="circle-fill" id="todayCircleFill" cx="50" cy="50" r="45" stroke="url(#circleGradient)"/>
+                            </svg>
+                            <div class="circle-content">
+                                <div class="circle-time" id="todayTimeText">0分钟</div>
+                                <div class="circle-label">今日听歌</div>
+                            </div>
+                        </div>
+                        <div class="stats-chart-container">
+                            <div class="chart-header">
+                                <h4><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> 听歌趋势 (最近7天)</h4>
+                            </div>
+                            <div class="chart-bars" id="weeklyChart">
+                                <!-- Dynamic bars -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="view-header">
+                        <div class="view-header-info">
+                            <h2>音乐列表</h2>
+                            <p id="libraryCount">0 首歌曲</p>
+                        </div>
+                        <div class="view-header-actions">
+                            <input
+                                class="search-input"
+                                id="librarySearch"
+                                type="search"
+                                placeholder="搜索歌曲名称…"
+                                autocomplete="off"
+                            />
+                            <button
+                                class="btn btn-primary"
+                                id="uploadTracksBtn"
+                            >
+                                <span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> 导入音乐</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="track-table-header">
+                        <span class="col-index">#</span>
+                        <span class="col-title">歌曲</span>
+                        <span class="col-badge"></span>
+                        <span class="col-actions"></span>
+                    </div>
+                    <div class="track-table" id="libraryTable">
+                        <!-- dynamic rows -->
+                    </div>
+                </div>
+
+                <!-- ── VIEW: Playlist ── -->
+                <div class="view hidden" id="view-playlist">
+                    <div class="view-bg" id="playlistBg"></div>
+                    <div class="playlist-hero-header">
+                        <div class="playlist-cover-art">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                        </div>
+                        <div class="playlist-hero-info">
+                            <span class="playlist-hero-label">歌单</span>
+                            <h2 id="playlistViewTitle">歌单名称</h2>
+                            <p id="playlistViewMeta">0 首歌曲</p>
+                            <div class="playlist-hero-actions">
+                                <button
+                                    class="btn btn-primary"
+                                    id="playlistPlayAllBtn"
+                                >
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> 播放全部
+                                </button>
+                                <button
+                                    class="btn btn-ghost"
+                                    id="uploadPlaylistCoverBtn"
+                                    title="上传封面"
+                                >
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="track-table-header">
+                        <span class="col-index">#</span>
+                        <span class="col-title">歌曲</span>
+                        <span class="col-badge"></span>
+                        <span class="col-actions"></span>
+                    </div>
+                    <div class="track-table" id="playlistTable">
+                        <!-- dynamic rows -->
+                    </div>
+                </div>
+
+                <!-- ── VIEW: Settings ── -->
+                <div class="view hidden" id="view-settings">
+                    <div class="view-header">
+                        <div class="view-header-info">
+                            <h2>设置</h2>
+                            <p>个性化你的音乐播放器</p>
+                        </div>
+                    </div>
+
+                    <div class="settings-list">
+                        <div class="setting-card">
+                            <div class="setting-card-info">
+                                <h3>自定义背景</h3>
+                                <p>
+                                    上传背景图片，将显示在正在播放、本地音乐和歌单页面
+                                </p>
+                            </div>
+                            <div class="setting-card-action">
+                                <button
+                                    class="btn btn-primary"
+                                    id="uploadBgBtn"
+                                >
+                                    上传背景图
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="setting-card">
+                            <div class="setting-card-info">
+                                <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> 听歌统计</h3>
+                                <p>记录你每天的音乐时光</p>
+                            </div>
+                            <div id="statsDisplay" class="stats-display">
+                                <div class="stats-loading">加载统计中...</div>
+                            </div>
+                        </div>
+
+                        <div class="setting-card">
+                            <div class="setting-card-info">
+                                <h3>歌词自动匹配</h3>
+                                <p>
+                                    播放歌曲时，将自动从网易云音乐搜索并匹配歌词，匹配结果本地缓存
+                                </p>
+                            </div>
+                            <div class="setting-card-action">
+                                <span class="setting-badge setting-badge--on"
+                                    >已启用</span
+                                >
+                            </div>
+                        </div>
+
+                        <div class="setting-card">
+                            <div class="setting-card-info">
+                                <h3>关于 yt-dlp</h3>
+                                <p>
+                                    下载 B站 / YouTube 音乐需要安装 yt-dlp
+                                    命令行工具， 安装后无需配置即可使用。
+                                </p>
+                            </div>
+                            <div class="setting-card-action">
+                                <code class="setting-code"
+                                    >pip install yt-dlp</code
+                                >
+                            </div>
+                        </div>
+
+                        <div class="setting-card">
+                            <div class="setting-card-info">
+                                <h3>运行方式</h3>
+                                <p>
+                                    启动 Electron 桌面应用：<code
+                                        >npm run electron</code
+                                    >
+                                </p>
+                            </div>
+                            <div class="setting-card-action">
+                                <code class="setting-code"
+                                    >npm run electron</code
+                                >
+                            </div>
+                        </div>
+
+                        <div class="setting-card setting-card--full">
+                            <div class="setting-card-info">
+                                <h3>💾 下载音乐</h3>
+                                <p>支持 B站视频、YouTube 链接，以及直接音频文件链接</p>
+                            </div>
+                            <div class="download-settings">
+                                <!-- 🔍 搜索区域 -->
+                                <div class="download-form-card">
+                                    <div class="form-group">
+                                        <label class="form-label" for="bilibiliSearchInput">
+                                            🔍 B站视频搜索
+                                        </label>
+                                        <div class="search-input-wrapper">
+                                            <input
+                                                class="form-input"
+                                                id="bilibiliSearchInput"
+                                                type="text"
+                                                placeholder="输入歌曲名或歌手，如：周杰伦晴天"
+                                                autocomplete="off"
+                                            />
+                                            <button
+                                                class="btn btn-primary"
+                                                id="searchBilibiliBtn"
+                                                type="button"
+                                            >
+                                                搜索
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 搜索结果区域 -->
+                                    <div class="search-results" id="searchResults" style="display: none;">
+                                        <div class="search-results-header">
+                                            <h3>搜索结果</h3>
+                                            <button class="btn btn-small btn-text" id="clearSearchBtn">清空</button>
+                                        </div>
+                                        <div class="search-results-list" id="searchResultsList">
+                                            <!-- 搜索结果项 -->
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 链接下载区域 -->
+                                <div class="download-form-card">
+                                    <div class="form-group">
+                                        <label class="form-label" for="downloadUrlInput">
+                                            链接地址（或直接粘贴B站链接）
+                                        </label>
+                                        <input
+                                            class="form-input"
+                                            id="downloadUrlInput"
+                                            type="url"
+                                            placeholder="https://www.bilibili.com/video/BV…  或  https://example.com/song.mp3"
+                                            autocomplete="off"
+                                        />
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="downloadNameInput">
+                                            自定义文件名
+                                            <span class="form-optional">（可选）</span>
+                                        </label>
+                                        <input
+                                            class="form-input"
+                                            id="downloadNameInput"
+                                            type="text"
+                                            placeholder="留空则使用原始标题"
+                                            autocomplete="off"
+                                        />
+                                    </div>
+                                    <div class="form-actions">
+                                        <button
+                                            class="btn btn-primary btn-large"
+                                            id="startDownloadBtn"
+                                        >
+                                            开始下载
+                                        </button>
+                                    </div>
+                                    <div class="download-tips">
+                                        <div class="tips-title">使用说明</div>
+                                        <ul>
+                                            <li>
+                                                <strong>B站 / YouTube</strong>：需在本机安装 <code>yt-dlp</code>，音频将自动提取为 MP3，并自动匹配歌词
+                                            </li>
+                                            <li>
+                                                <strong>直接链接</strong>：支持 mp3、flac、wav、m4a 等音频格式的直链下载
+                                            </li>
+                                            <li>
+                                                <strong>🔍 搜索功能</strong>：直接输入歌名搜索B站视频，点击结果即可下载
+                                            </li>
+                                            <li>
+                                                安装 yt-dlp：<code>pip install yt-dlp</code> 或前往 <code>github.com/yt-dlp/yt-dlp</code> 下载
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <div class="download-jobs-section" id="downloadJobsSection">
+                                    <div class="download-jobs-title" id="downloadJobsTitle" style="display: none">
+                                        下载任务
+                                    </div>
+                                    <div class="download-job-list" id="downloadJobList">
+                                        <!-- dynamic job cards -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── VIEW: Stats (轨迹) ── -->
+                <div class="view hidden" id="view-stats">
+                    <div class="view-header">
+                        <div class="view-header-info">
+                            <h2><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> 听歌轨迹</h2>
+                            <p>记录你的每一天音乐时光</p>
+                        </div>
+                    </div>
+
+                    <div class="stats-content">
+                        <div class="stats-top-songs-card">
+                            <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg> 最常听的歌曲</h3>
+                            <div class="top-songs-grid" id="topSongsList">
+                                <!-- Dynamic top songs -->
+                            </div>
+                        </div>
+
+                        <div class="stats-calendar-card">
+                            <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> 听歌日历</h3>
+                            <p>点击日期查看当天的听歌时长</p>
+                            <div class="listening-calendar">
+                                <div class="calendar-header">
+                                    <button class="calendar-nav" id="prevMonth"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
+                                    <div class="calendar-title" id="calendarTitle">2026年4月</div>
+                                    <button class="calendar-nav" id="nextMonth"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></button>
+                                </div>
+                                <div class="calendar-weekdays">
+                                    <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+                                </div>
+                                <div class="calendar-days" id="calendarDays">
+                                    <!-- Dynamic days -->
+                                </div>
+                                <div class="calendar-legend">
+                                    <div class="legend-item">
+                                        <div class="legend-dot" style="background: rgba(255,255,255,0.1)"></div>
+                                        <span>无记录</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <div class="legend-dot" style="background: rgba(255,107,157,0.3)"></div>
+                                        <span>较少</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <div class="legend-dot" style="background: rgba(255,107,157,0.6)"></div>
+                                        <span>中等</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <div class="legend-dot" style="background: rgba(255,107,157,1)"></div>
+                                        <span>较多</span>
+                                    </div>
+                                </div>
+                                <div class="calendar-selected-info" id="calendarSelectedInfo">
+                                    <span class="selected-date">请选择日期</span>
+                                    <span class="selected-time">--</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- ═══ PLAYER BAR (fixed bottom) ═══ -->
+        <div class="player-bar" id="playerBar">
+            <div class="player-bar-track">
+                <div class="bar-disc" id="barDisc">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+                </div>
+                <div class="bar-info">
+                    <span class="bar-title" id="barTitle">未在播放</span>
+                    <span class="bar-subtitle" id="barSubtitle"></span>
+                </div>
+                <button
+                    class="bar-icon-btn bar-favorite"
+                    id="barFavoriteBtn"
+                    title="加入歌单"
+                >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                </button>
+            </div>
+
+            <div class="player-bar-center">
+                <div class="ctrl-progress">
+                    <span class="time-label" id="currentTimeEl">0:00</span>
+                    <input
+                        class="progress-bar"
+                        type="range"
+                        id="progressBar"
+                        min="0"
+                        max="100"
+                        value="0"
+                        step="0.1"
+                    />
+                    <span class="time-label" id="totalTimeEl">0:00</span>
+                </div>
+                <div class="ctrl-btns">
+                    <button class="ctrl-btn" id="shuffleBtn" title="随机播放">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l-3.5-3.5M10 10l-6-6"/></svg>
+                    </button>
+                    <button
+                        class="ctrl-btn"
+                        id="prevBtn"
+                        title="上一首"
+                    >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6V6zm3.5 6l8.5 6V6l-8.5 6z"/></svg>
+                    </button>
+                    <button
+                        class="ctrl-btn ctrl-play"
+                        id="playBtn"
+                        title="播放 / 暂停"
+                    >
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                    </button>
+                    <button
+                        class="ctrl-btn"
+                        id="nextBtn"
+                        title="下一首"
+                    >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6h2v12h-2V6z"/></svg>
+                    </button>
+                    <button class="ctrl-btn" id="loopBtn" title="循环模式">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4M3 11V9a4 4 0 014-4h13M7 23l-4-4 4-4M21 13v2a4 4 0 01-4 4H4"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="player-bar-extra">
+                <button
+                    class="bar-icon-btn"
+                    id="gotoPlayingBtn"
+                    title="查看正在播放"
+                >
+                    🎵
+                </button>
+                <div class="volume-wrap">
+                    <button class="bar-icon-btn" id="muteBtn" title="静音">
+                        🔊
+                    </button>
+                    <input
+                        class="volume-bar"
+                        type="range"
+                        id="volumeBar"
+                        min="0"
+                        max="1"
+                        step="0.01"
+                        value="0.8"
+                    />
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ MODAL ═══ -->
+        <div class="modal-overlay hidden" id="modalOverlay">
+            <div class="modal" id="modal" role="dialog" aria-modal="true">
+                <div class="modal-header">
+                    <h3 class="modal-title" id="modalTitle">提示</h3>
+                    <button
+                        class="modal-close-btn"
+                        id="modalCloseBtn"
+                        aria-label="关闭"
+                    >
+                        ✕
+                    </button>
+                </div>
+                <div class="modal-body" id="modalBody"></div>
+                <div class="modal-footer" id="modalFooter">
+                    <button class="btn btn-ghost" id="modalCancelBtn">
+                        取消
+                    </button>
+                    <button class="btn btn-primary" id="modalConfirmBtn">
+                        确定
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ TOAST ═══ -->
+        <div
+            class="toast-container"
+            id="toastContainer"
+            aria-live="polite"
+        ></div>
+
+        <!-- ═══ HIDDEN ELEMENTS ═══ -->
+        <audio id="audioPlayer" preload="metadata"></audio>
+        <input
+            type="file"
+            id="audioFileInput"
+            accept="audio/*"
+            multiple
+            style="display: none"
+        />
+        <input
+            type="file"
+            id="bgFileInput"
+            accept="image/*"
+            style="display: none"
+        />
+        <input
+            type="file"
+            id="coverFileInput"
+            accept="image/*"
+            style="display: none"
+        />
+        <input
+            type="file"
+            id="playlistCoverFileInput"
+            accept="image/*"
+            style="display: none"
+        />
+
+        <!-- Context Menu for Playlist -->
+        <div class="context-menu" id="contextMenu" style="display: none;">
+            <div class="context-menu-item" data-action="rename">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                重命名
+            </div>
+            <div class="context-menu-item" data-action="upload-cover">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                上传封面
+            </div>
+            <div class="context-menu-item context-menu-item--danger" data-action="delete">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                删除歌单
+            </div>
+        </div>
+
+        <script src="/app.js" defer></script>
+    </body>
+</html>

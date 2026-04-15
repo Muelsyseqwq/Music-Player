@@ -1,0 +1,8 @@
+node_modules/
+*.zip
+*.exe
+ffmpeg-8.1-essentials_build/
+.idea/
+downloads/
+data/
+public/uploads/
