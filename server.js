@@ -1648,12 +1648,13 @@ app.post("/api/tracks/:trackId(*)/rename", async (req, res, next) => {
       const artistDir = path.join(DOWNLOADS_DIR, sanitizeName(artist));
       const songDir = path.join(artistDir, sanitizedSongName);
       await fsp.mkdir(songDir, { recursive: true });
-      newAudioPath = path.join(songDir, `${sanitizedSongName}${ext}`);
-      newTrackId = path.join(sanitizeName(artist), sanitizedSongName, `${sanitizedSongName}${ext}`).replace(/\\/g, '/');
+      const fileBaseName = `${sanitizedSongName} ${sanitizeName(artist)}`;
+      newAudioPath = path.join(songDir, `${fileBaseName}${ext}`);
+      newTrackId = path.join(sanitizeName(artist), sanitizedSongName, `${fileBaseName}${ext}`).replace(/\\/g, '/');
 
       // Move associated files to new directory
       for (const f of filesToMove) {
-        const newFilePath = path.join(songDir, `${sanitizedSongName}${f.suffix}`);
+        const newFilePath = path.join(songDir, `${fileBaseName}${f.suffix}`);
         if (!(await fileExists(newFilePath))) {
           await fsp.rename(f.oldPath, newFilePath);
         }

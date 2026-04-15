@@ -307,6 +307,51 @@ body.is-immersive .player-bar {
     transform: scale(1);
 }
 
+/* Immersive mode: move disc to top-left and shrink */
+.app.is-immersive .view#view-playing .playing-layout {
+    position: relative;
+}
+
+.app.is-immersive .view#view-playing .playing-left {
+    position: fixed;
+    top: 60px;
+    left: 20px;
+    padding: 0;
+    z-index: 10;
+}
+
+.app.is-immersive .view#view-playing .disc-wrapper {
+    transform: scale(0.5);
+    transform-origin: top left;
+}
+
+.app.is-immersive .view#view-playing .playing-track-meta {
+    position: fixed;
+    top: 200px;
+    left: 20px;
+    width: 130px;
+    text-align: center;
+    z-index: 10;
+}
+
+.app.is-immersive .view#view-playing .playing-title {
+    font-size: 1rem;
+    margin-bottom: 4px;
+}
+
+.app.is-immersive .view#view-playing .playing-subtitle {
+    font-size: 0.75rem;
+    margin-bottom: 0;
+}
+
+.app.is-immersive .view#view-playing .playing-right {
+    position: fixed;
+    right: 0;
+    width: 33.33%;
+    top: 80px;
+    bottom: 80px;
+}
+
 .sidebar,
 .player-bar {
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;

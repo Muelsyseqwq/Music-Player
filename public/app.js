@@ -1018,11 +1018,14 @@ function renderPlayingView() {
     console.log("[Player] Track thumbnailUrl:", track.thumbnailUrl, "thumbnailFile:", track.thumbnailFile);
     if (track.thumbnailUrl) {
       els.mainDisc.classList.add("has-thumbnail");
-      // Set CSS variable for the ::after pseudo-element to use
-      els.mainDisc.style.setProperty("--thumbnail-url", `url("${track.thumbnailUrl}")`);
-      // Also add direct style for compatibility
-      els.mainDisc.style.backgroundImage = `url("${track.thumbnailUrl}")`;
-      console.log("[Player] Set disc thumbnail:", track.thumbnailUrl);
+      // Preload image before applying
+      const img = new Image();
+      img.onload = () => {
+        els.mainDisc.style.setProperty("--thumbnail-url", `url("${track.thumbnailUrl}")`);
+        els.mainDisc.style.backgroundImage = `url("${track.thumbnailUrl}")`;
+        console.log("[Player] Set disc thumbnail:", track.thumbnailUrl);
+      };
+      img.src = track.thumbnailUrl;
     } else {
       els.mainDisc.classList.remove("has-thumbnail");
       els.mainDisc.style.removeProperty("--thumbnail-url");
@@ -1071,20 +1074,30 @@ function renderLyrics() {
     return;
   }
 
+  // If instrumental track, show "纯音乐~"
+  if (isInstrumentalTrack(state.currentTrack.id)) {
+    els.lyricsStatus.textContent = "纯音乐";
+    els.lyricsScroll.innerHTML = `
+      <div class="lyrics-list">
+        <span class="lyric-line is-active" style="font-size:1.2rem;opacity:0.8">纯音乐~</span>
+      </div>`;
+    return;
+  }
+
   if (!state.lyricLines.length) {
     els.lyricsStatus.textContent = "歌词匹配中…";
     els.lyricsScroll.innerHTML = `
       <div class="lyrics-placeholder">
         <p>暂无歌词</p>
         <span>正在尝试自动匹配歌词，或歌曲暂无匹配结果</span>
-        <button class="btn btn-primary" onclick="refetchLyricsForCurrentTrack()" style="margin-top: 20px;">
-          🔄 重新获取歌词
+        <button class="btn btn-primary" onclick="markCurrentAsInstrumental()" style="margin-top: 20px;">
+          🎵 标记为纯音乐
         </button>
       </div>`;
     return;
   }
 
-  els.lyricsStatus.textContent = `${state.lyricLines.length} 行歌词`;
+  els.lyricsStatus.textContent = "歌词";
 
   const html = state.lyricLines
     .map((line, i) => {
@@ -1228,6 +1241,10 @@ async function playTrack(trackId, autoPlay = true) {
   if (audio.src !== newSrc) audio.src = track.url;
 
   state.currentTrack = track;
+  // Save last played track to localStorage
+  try {
+    localStorage.setItem('lastPlayedTrackId', track.id);
+  } catch {}
   renderPlayingView();
   // Highlight in all tables
   document.querySelectorAll(".track-row").forEach((r) => {
@@ -1352,6 +1369,13 @@ async function refreshTracks(keepCurrent = true) {
     const found = state.tracks.find((t) => t.id === prev);
     if (found) state.currentTrack = found;
   }
+  // Preload all thumbnails in background
+  state.tracks.forEach(track => {
+    if (track.thumbnailUrl) {
+      const img = new Image();
+      img.src = track.thumbnailUrl;
+    }
+  });
   if (state.view === "library") renderLibrary();
   if (state.view === "playlist") renderPlaylistView();
   renderPlayingView();
@@ -1881,7 +1905,17 @@ function showRenameDialog(track) {
               state.tracks = result.tracks || state.tracks;
               renderLibrary();
               const renamedTrack = state.tracks.find(t => t.id === result.newTrackId);
-              if (renamedTrack) saveInstrumentalMark(renamedTrack.id);
+              if (renamedTrack) {
+                saveInstrumentalMark(renamedTrack.id);
+                // Update current track if this was the playing one
+                if (state.currentTrack?.id === track.id || state.currentTrack?.id === renamedTrack.id) {
+                  state.currentTrack = renamedTrack;
+                  state.lyricLines = [{ time: 0, text: "纯音乐~" }];
+                  state.activeLyricIndex = 0;
+                  renderPlayingView();
+                  renderLyrics();
+                }
+              }
             }
           } catch (err) {
             console.error("[Rename] Failed:", err);
@@ -1890,6 +1924,12 @@ function showRenameDialog(track) {
         } else {
           saveInstrumentalMark(track.id);
           showToast("已标记为纯音乐", "success");
+          // Update lyrics display immediately
+          if (state.currentTrack?.id === track.id) {
+            state.lyricLines = [{ time: 0, text: "纯音乐~" }];
+            state.activeLyricIndex = 0;
+            renderLyrics();
+          }
         }
         return;
       }
@@ -1925,34 +1965,18 @@ function showRenameDialog(track) {
   });
 }
 
-// 重新获取当前播放歌曲的歌词（用户点击按钮触发）
-async function refetchLyricsForCurrentTrack() {
+
+// 标记当前播放歌曲为纯音乐（用户点击按钮）
+function markCurrentAsInstrumental() {
   if (!state.currentTrack) {
-    showToast("没有正在播放的歌曲", "warn");
+    showToast("请先播放一首歌曲", "warn");
     return;
   }
-  
-  const track = state.currentTrack;
-  console.log("[Lyrics] User requested re-fetch for:", track.title);
-  
-  // 显示加载状态
-  if (els.lyricsScroll) {
-    els.lyricsScroll.innerHTML = `
-      <div class="lyrics-placeholder">
-        <p><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg> 搜索歌词中...</p>
-        <span>正在从 LRCLIB 搜索: ${escapeHtml(track.title)}</span>
-      </div>`;
-  }
-  
-  // 清除纯音乐标记（如果之前误标记了）
-  clearInstrumentalMark(track.id);
-  
-  // 重新搜索歌词
-  await fetchLyricsForTrack(track);
-  
-  // 刷新歌词显示
-  await loadLyrics(track.id);
+  saveInstrumentalMark(state.currentTrack.id);
+  state.lyricLines = [{ time: 0, text: "纯音乐~" }];
+  state.activeLyricIndex = 0;
   renderLyrics();
+  showToast("已标记为纯音乐", "success");
 }
 
 // 保存/获取/清除纯音乐标记
@@ -2795,6 +2819,27 @@ async function init() {
       refreshFolders().catch(() => {}),
       refreshSettings().catch(() => {}),
     ]);
+
+    // Restore last played track from localStorage (without playing)
+    try {
+      const lastTrackId = localStorage.getItem('lastPlayedTrackId');
+      if (lastTrackId && !state.currentTrack) {
+        const track = state.tracks.find(t => t.id === lastTrackId);
+        if (track) {
+          state.currentTrack = track;
+          // Set audio source but don't play
+          audio.src = track.url;
+          // Load lyrics
+          loadLyrics(track.id);
+          renderPlayingView();
+          applyBackground();
+          // Highlight in library
+          document.querySelectorAll(".track-row").forEach((r) => {
+            r.classList.toggle("is-active", r.dataset.trackId === track.id);
+          });
+        }
+      }
+    } catch {}
 
     renderLibrary();
     renderPlayingView();
